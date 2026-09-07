@@ -3,11 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TOEFL iBT 2026 Demo (Enhanced)</title>
+    <title>TOEFL iBT 2026 · Interactive Demo (React + Google TTS)</title>
+    <!-- Tailwind + Font Awesome -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <!-- React, ReactDOM, Babel -->
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+
     <style>
-        /* ----- Global styles ----- */
+        /* ----- base styles ----- */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Outfit:wght@400;600;700;900&family=Fira+Code:wght@500&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
         .font-display { font-family: 'Outfit', sans-serif; }
@@ -20,20 +26,18 @@
             box-shadow: 0 10px 40px -10px rgba(15, 23, 42, 0.08);
         }
 
-        .nav-item { transition: all 0.2s ease-in-out; position: relative; }
+        .nav-item { transition: all 0.2s ease-in-out; position: relative; cursor: pointer; }
         .nav-item.active { background-color: #e0e7ff; color: #4338ca; font-weight: 700; }
         .nav-item.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background-color: #4f46e5; }
 
-        .section-content { display: none; animation: fadeIn 0.4s ease-out forwards; }
-        .section-content.active { display: block; }
-
+        .section-content { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
         .btn-primary { background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%); color: white; transition: all 0.15s ease; box-shadow: 0 4px 6px -1px rgba(67, 56, 202, 0.3); }
         .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 12px -1px rgba(67, 56, 202, 0.5); }
         .btn-primary:active { transform: scale(0.98); }
 
-        .explanation-box { border-left: 4px solid #3b82f6; background-color: #eff6ff; padding: 1.5rem; border-radius: 0 1rem 1rem 0; margin-bottom: 2rem; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1); }
+        .explanation-box { border-left: 4px solid #3b82f6; background-color: #eff6ff; padding: 1.5rem; border-radius: 0 1rem 1rem 0; margin-bottom: 2rem; }
         .explanation-box.amber { border-left-color: #f59e0b; background-color: #fffbeb; }
         .explanation-box.rose { border-left-color: #f43f5e; background-color: #fff1f2; }
         .explanation-box.emerald { border-left-color: #10b981; background-color: #ecfdf5; }
@@ -53,6 +57,7 @@
             transition: border-color 0.2s;
             letter-spacing: 0.15em;
             padding-bottom: 2px;
+            width: 80px;
         }
         .missing-input:focus { border-color: #4f46e5; }
         .missing-input.correct { border-color: #10b981; color: #10b981; }
@@ -66,601 +71,646 @@
         .feedback-warning { color: #d97706; }
         .feedback-error { color: #ef4444; }
 
-        /* Voice selector */
-        .voice-selector { max-width: 300px; }
+        .voice-selector { max-width: 320px; }
     </style>
 </head>
-<body class="h-screen flex overflow-hidden">
+<body>
+    <div id="root"></div>
 
-    <!-- Sidebar Navigation -->
-    <aside class="w-72 glass-panel border-r border-slate-200 flex flex-col justify-between hidden md:flex z-20 relative bg-white/95">
-        <div>
-            <div class="p-6 bg-gradient-to-b from-indigo-50 to-transparent border-b border-indigo-100">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/ETS_logo.svg/512px-ETS_logo.svg.png" alt="ETS" class="h-6 mb-2 opacity-50">
-                <h1 class="text-xl font-black text-slate-800 font-display">TOEFL iBT 2026</h1>
-                <p class="text-xs text-slate-600 mt-1 font-semibold">15‑Class Course Proposal</p>
-            </div>
-            <nav class="mt-4 flex flex-col gap-1 px-2">
-                <button class="nav-item active text-left px-4 py-3 text-sm flex items-center gap-3 rounded-lg" data-target="sec-exec"><i class="fa-solid fa-chart-pie text-slate-400 w-4"></i> Overview</button>
-                <button class="nav-item text-left px-4 py-3 text-sm flex items-center gap-3 rounded-lg" data-target="sec-read"><i class="fa-solid fa-book-open text-slate-400 w-4"></i> Reading (3 Tasks)</button>
-                <button class="nav-item text-left px-4 py-3 text-sm flex items-center gap-3 rounded-lg" data-target="sec-listen"><i class="fa-solid fa-headphones text-slate-400 w-4"></i> Listening (4 Tasks)</button>
-                <button class="nav-item text-left px-4 py-3 text-sm flex items-center gap-3 rounded-lg" data-target="sec-speak"><i class="fa-solid fa-microphone text-slate-400 w-4"></i> Speaking (2 Tasks)</button>
-                <button class="nav-item text-left px-4 py-3 text-sm flex items-center gap-3 rounded-lg" data-target="sec-write"><i class="fa-solid fa-keyboard text-slate-400 w-4"></i> Writing (3 Tasks)</button>
-            </nav>
-        </div>
-        <div class="p-4 border-t border-slate-200 text-xs text-slate-400">
-            <i class="fa-solid fa-microchip mr-1"></i> Built with Web Speech API
-        </div>
-    </aside>
+    <script type="text/babel">
+        const { useState, useRef, useEffect, useCallback } = React;
 
-    <!-- Main Content -->
-    <main class="flex-1 flex flex-col h-full overflow-y-auto relative bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
-        <div class="p-6 md:p-12 max-w-5xl mx-auto w-full pb-24" id="content-container">
-
-            <!-- ========== SECTION 1: Overview ========== -->
-            <section id="sec-exec" class="section-content active">
-                <div class="mb-10">
-                    <span class="bg-indigo-100 text-indigo-800 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-indigo-200">Proposal Presentation</span>
-                    <h2 class="text-5xl font-black mt-5 mb-4 tracking-tight text-slate-900 font-display">TOEFL iBT 2026 Structure</h2>
-                    <p class="text-slate-600 text-xl font-medium leading-relaxed max-w-3xl">Un recorrido completo por todas las tareas renovadas, con instrucciones claras, voz natural y reconocimiento de voz integrado.</p>
-                </div>
-
-                <div class="grid md:grid-cols-2 gap-6 mb-8">
-                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                        <h3 class="text-lg font-black text-slate-800 mb-2"><i class="fa-solid fa-book-open text-blue-500 mr-2"></i> Reading (50 items / ~30m)</h3>
-                        <p class="text-sm text-slate-600">Complete the Words, Read in Daily Life, y Academic Passages.</p>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                        <h3 class="text-lg font-black text-slate-800 mb-2"><i class="fa-solid fa-headphones text-amber-500 mr-2"></i> Listening (47 items / ~29m)</h3>
-                        <p class="text-sm text-slate-600">Listen & Choose a Response, Conversations, Announcements, y Academic Talks.</p>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                        <h3 class="text-lg font-black text-slate-800 mb-2"><i class="fa-solid fa-microphone text-rose-500 mr-2"></i> Speaking (11 items / ~8m)</h3>
-                        <p class="text-sm text-slate-600">Listen & Repeat y Take an Interview (con reconocimiento de voz).</p>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                        <h3 class="text-lg font-black text-slate-800 mb-2"><i class="fa-solid fa-keyboard text-emerald-500 mr-2"></i> Writing (12 items / ~23m)</h3>
-                        <p class="text-sm text-slate-600">Build a Sentence, Write an Email, y Academic Discussion.</p>
-                    </div>
-                </div>
-
-                <div class="text-center mt-8">
-                    <button onclick="navigateTo('sec-read');" class="btn-primary py-4 px-10 rounded-xl font-black text-lg transition shadow-xl">Explorar secciones <i class="fa-solid fa-arrow-right ml-2"></i></button>
-                </div>
-            </section>
-
-            <!-- ========== SECTION 2: Reading ========== -->
-            <section id="sec-read" class="section-content">
-                <div class="mb-6">
-                    <span class="bg-blue-100 text-blue-800 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-blue-200">Sección 1</span>
-                    <h2 class="text-4xl font-black mt-4 mb-2 text-slate-900 font-display">Reading Tasks</h2>
-                </div>
-
-                <div class="explanation-box">
-                    <h4 class="font-black text-blue-800 mb-2 uppercase tracking-widest text-sm"><i class="fa-solid fa-circle-info mr-1"></i> Instrucciones generales</h4>
-                    <p class="text-slate-700 text-sm leading-relaxed">Esta sección evalúa tu capacidad para comprender textos escritos en inglés. Consta de 50 preguntas y durará unos 30 minutos. A continuación encontrarás 3 tareas representativas del examen.</p>
-                </div>
-
-                <!-- Task 1: Complete the Words -->
-                <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm mb-6">
-                    <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded uppercase tracking-widest">Task 1: Complete the Words</span>
-                    <p class="text-sm text-slate-700 mt-2 mb-3 font-medium">Instrucciones: Lee el texto y escribe las letras que faltan en cada espacio para formar palabras completas. Usa el contexto para deducir la respuesta correcta.</p>
-                    <p class="text-sm text-slate-500 mb-4">Ejemplo: "The test is de_______ to measure..." → "designed"</p>
-
-                    <div class="text-lg leading-loose text-slate-800 max-w-2xl mx-auto bg-slate-50 p-6 rounded-2xl border border-slate-200">
-                        The updated test measures proficiency. <br>
-                        It is de<input type="text" id="r-1" class="missing-input font-mono-custom w-24" maxlength="6" placeholder="______"> to op<input type="text" id="r-2" class="missing-input font-mono-custom w-24" maxlength="6" placeholder="______"> both con<input type="text" id="r-3" class="missing-input font-mono-custom w-32" maxlength="10" placeholder="__________"> and qu<input type="text" id="r-4" class="missing-input font-mono-custom w-20" maxlength="5" placeholder="_____">.
-                    </div>
-                    <div class="text-center mt-4">
-                        <button onclick="checkCompleteWords()" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg text-sm hover:bg-blue-700">Validar respuestas</button>
-                        <p id="word-feedback" class="text-xs font-bold mt-2 hidden"></p>
-                    </div>
-                </div>
-
-                <!-- Task 2: Read in Daily Life (3 options) -->
-                <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm mb-6">
-                    <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded uppercase tracking-widest">Task 2: Read in Daily Life</span>
-                    <p class="text-sm text-slate-700 mt-2 mb-3 font-medium">Instrucciones: Lee el aviso y responde la pregunta seleccionando la opción correcta.</p>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4 text-sm text-slate-700 italic">
-                        "Aviso: El sótano de la biblioteca estará cerrado por mantenimiento eléctrico el martes entre las 8:00 a.m. y las 12:00 p.m. Hay espacios de estudio alternativos en el tercer piso y en el edificio anexo (abierto 24h)."
-                    </div>
-                    <p class="font-bold text-slate-800 text-sm mb-3">¿Dónde pueden estudiar los estudiantes el martes por la mañana?</p>
-                    <div class="space-y-2" id="read-mcq1">
-                        <button class="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onclick="checkMCQ(this, false, 'read-mcq1')">A) En el sótano de la biblioteca.</button>
-                        <button class="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onclick="checkMCQ(this, true, 'read-mcq1')">B) En el tercer piso o en el edificio anexo.</button>
-                        <button class="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onclick="checkMCQ(this, false, 'read-mcq1')">C) En la sala de lectura principal.</button>
-                    </div>
-                </div>
-
-                <!-- Task 3: Academic Passage (3 options) -->
-                <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm mb-6">
-                    <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded uppercase tracking-widest">Task 3: Academic Passage</span>
-                    <p class="text-sm text-slate-700 mt-2 mb-3 font-medium">Instrucciones: Lee el fragmento académico y selecciona la opción que mejor exprese la idea principal.</p>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4 text-sm text-slate-700 italic">
-                        "La fotosíntesis en plantas de dosel bajo depende en gran medida de los 'sunflecks' (manchas de luz solar directa que se filtran a través del follaje superior). Estos destellos intermitentes representan hasta el 50% de la asimilación total de carbono en especies del sotobosque. Además, permiten que las plantas aprovechen períodos cortos de alta irradiación sin sufrir estrés por exceso de luz."
-                    </div>
-                    <p class="font-bold text-slate-800 text-sm mb-3">¿Cuál es la función principal de los sunflecks para las plantas del sotobosque?</p>
-                    <div class="space-y-2" id="read-mcq2">
-                        <button class="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onclick="checkMCQ(this, true, 'read-mcq2')">A) Proporcionar energía sustancial para la asimilación de carbono.</button>
-                        <button class="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onclick="checkMCQ(this, false, 'read-mcq2')">B) Prevenir daños en el follaje por calor intenso.</button>
-                        <button class="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onclick="checkMCQ(this, false, 'read-mcq2')">C) Aumentar la competencia con otras plantas por luz.</button>
-                    </div>
-                </div>
-
-                <div class="flex justify-end mt-6">
-                    <button onclick="navigateTo('sec-listen');" class="bg-slate-800 text-white py-3 px-8 rounded-xl font-bold transition hover:bg-slate-700">Siguiente sección <i class="fa-solid fa-arrow-right ml-2"></i></button>
-                </div>
-            </section>
-
-            <!-- ========== SECTION 3: Listening ========== -->
-            <section id="sec-listen" class="section-content">
-                <div class="mb-6">
-                    <span class="bg-amber-100 text-amber-800 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-amber-200">Sección 2</span>
-                    <h2 class="text-4xl font-black mt-4 mb-2 text-slate-900 font-display">Listening Tasks (4 tipos)</h2>
-                </div>
-
-                <div class="explanation-box amber">
-                    <h4 class="font-black text-amber-800 mb-2 uppercase tracking-widest text-sm"><i class="fa-solid fa-circle-info mr-1"></i> Instrucciones generales</h4>
-                    <p class="text-slate-700 text-sm leading-relaxed">Esta sección mide tu comprensión auditiva en diferentes contextos. Haz clic en el botón de audio para escuchar cada fragmento, luego selecciona la respuesta correcta entre las opciones.</p>
-                </div>
-
-                <!-- 1. Listen and Choose (4 options) -->
-                <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm mb-6">
-                    <span class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded uppercase tracking-widest">1. Listen and Choose a Response</span>
-                    <p class="text-sm text-slate-700 mt-2 mb-3 font-medium">Instrucción: Escucha la pregunta y elige la respuesta más apropiada.</p>
-                    <div class="mt-4 flex items-center gap-4">
-                        <button onclick="playAudio('Could you let me know where the registrar office is located?', this, 'l1-box')" class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center shrink-0 hover:scale-110 transition"><i class="fa-solid fa-play"></i></button>
-                        <span class="text-xs text-slate-500 font-bold uppercase">Haz clic para oír el audio</span>
-                    </div>
-                    <div class="hidden mt-4 pt-4 border-t border-slate-100" id="l1-box">
-                        <p class="text-sm font-bold text-slate-800 mb-2">Selecciona la respuesta adecuada:</p>
-                        <div class="space-y-2" id="l1-mcq">
-                            <button class="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onclick="checkMCQ(this, false, 'l1-mcq')">A) Se debe entregar el viernes próximo.</button>
-                            <button class="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onclick="checkMCQ(this, true, 'l1-mcq')">B) Claro, está en el segundo piso del Hogg Hall.</button>
-                            <button class="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onclick="checkMCQ(this, false, 'l1-mcq')">C) Sí, la oficina de admisiones está cerrada hoy.</button>
-                            <button class="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onclick="checkMCQ(this, false, 'l1-mcq')">D) No, el registro es solo en línea.</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 2. Conversation (3 options) -->
-                <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm mb-6">
-                    <span class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded uppercase tracking-widest">2. Listen to a Conversation</span>
-                    <p class="text-sm text-slate-700 mt-2 mb-3 font-medium">Instrucción: Escucha la conversación y responde la pregunta.</p>
-                    <div class="mt-4 flex items-center gap-4">
-                        <button onclick="playAudio('Student: Professor, I missed the lab session yesterday because of a doctor appointment. Can I make up the experiment? Professor: Sure, stop by during my office hours on Thursday.', this, 'l2-box')" class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center shrink-0 hover:scale-110 transition"><i class="fa-solid fa-play"></i></button>
-                        <span class="text-xs text-slate-500 font-bold uppercase">Haz clic para oír la conversación</span>
-                    </div>
-                    <div class="hidden mt-4 pt-4 border-t border-slate-100" id="l2-box">
-                        <p class="text-sm font-bold text-slate-800 mb-2">¿Qué invita a hacer el profesor al estudiante?</p>
-                        <div class="space-y-2" id="l2-mcq">
-                            <button class="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onclick="checkMCQ(this, true, 'l2-mcq')">A) Visitar durante sus horas de oficina el jueves.</button>
-                            <button class="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onclick="checkMCQ(this, false, 'l2-mcq')">B) Completar un cuestionario en línea como compensación.</button>
-                            <button class="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onclick="checkMCQ(this, false, 'l2-mcq')">C) Asistir a una sesión de laboratorio adicional el sábado.</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 3. Announcement (3 options) -->
-                <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm mb-6">
-                    <span class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded uppercase tracking-widest">3. Listen to an Announcement</span>
-                    <p class="text-sm text-slate-700 mt-2 mb-3 font-medium">Instrucción: Escucha el anuncio y responde la pregunta.</p>
-                    <div class="mt-4 flex items-center gap-4">
-                        <button onclick="playAudio('Attention students, parking lot B will be closed this weekend for repaving. All vehicles must be removed by midnight Friday.', this, 'l3-box')" class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center shrink-0 hover:scale-110 transition"><i class="fa-solid fa-play"></i></button>
-                        <span class="text-xs text-slate-500 font-bold uppercase">Haz clic para oír el anuncio</span>
-                    </div>
-                    <div class="hidden mt-4 pt-4 border-t border-slate-100" id="l3-box">
-                        <p class="text-sm font-bold text-slate-800 mb-2">¿Qué acción deben tomar los estudiantes?</p>
-                        <div class="space-y-2" id="l3-mcq">
-                            <button class="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onclick="checkMCQ(this, true, 'l3-mcq')">A) Retirar los vehículos del estacionamiento B antes de la medianoche del viernes.</button>
-                            <button class="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onclick="checkMCQ(this, false, 'l3-mcq')">B) Estacionar solo en el lote B durante el fin de semana.</button>
-                            <button class="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onclick="checkMCQ(this, false, 'l3-mcq')">C) Usar el transporte público durante el fin de semana.</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 4. Academic Talk (3 options) -->
-                <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm mb-6">
-                    <span class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded uppercase tracking-widest">4. Listen to an Academic Talk</span>
-                    <p class="text-sm text-slate-700 mt-2 mb-3 font-medium">Instrucción: Escucha el fragmento académico y responde la pregunta.</p>
-                    <div class="mt-4 flex items-center gap-4">
-                        <button onclick="playAudio('Geological stratification reveals that urban heat islands are intensified not just by concrete surfaces, but crucially by the absence of vegetative evapotranspiration.', this, 'l4-box')" class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center shrink-0 hover:scale-110 transition"><i class="fa-solid fa-play"></i></button>
-                        <span class="text-xs text-slate-500 font-bold uppercase">Haz clic para oír el fragmento</span>
-                    </div>
-                    <div class="hidden mt-4 pt-4 border-t border-slate-100" id="l4-box">
-                        <p class="text-sm font-bold text-slate-800 mb-2">Según el orador, ¿cuál es un factor principal de las islas de calor urbanas?</p>
-                        <div class="space-y-2" id="l4-mcq">
-                            <button class="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onclick="checkMCQ(this, false, 'l4-mcq')">A) La alta densidad de tráfico industrial.</button>
-                            <button class="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onclick="checkMCQ(this, true, 'l4-mcq')">B) La falta de enfriamiento por evapotranspiración vegetal.</button>
-                            <button class="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onclick="checkMCQ(this, false, 'l4-mcq')">C) El color oscuro de los techos y pavimentos.</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex justify-end mt-6">
-                    <button onclick="navigateTo('sec-speak');" class="bg-slate-800 text-white py-3 px-8 rounded-xl font-bold transition hover:bg-slate-700">Siguiente sección <i class="fa-solid fa-arrow-right ml-2"></i></button>
-                </div>
-            </section>
-
-            <!-- ========== SECTION 4: Speaking ========== -->
-            <section id="sec-speak" class="section-content">
-                <div class="mb-6">
-                    <span class="bg-rose-100 text-rose-800 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-rose-200">Sección 3</span>
-                    <h2 class="text-4xl font-black mt-4 mb-2 text-slate-900 font-display">Speaking Tasks (con reconocimiento de voz)</h2>
-                </div>
-
-                <div class="explanation-box rose">
-                    <h4 class="font-black text-rose-800 mb-2 uppercase tracking-widest text-sm"><i class="fa-solid fa-circle-info mr-1"></i> Instrucciones generales</h4>
-                    <p class="text-slate-700 text-sm leading-relaxed">Esta sección evalúa tu habilidad para hablar en inglés. Consta de 11 ítems en ~8 minutos. Aquí tienes dos tareas representativas. Usa el micrófono para responder; el sistema transcribirá tu voz en tiempo real. En la primera tarea, recibirás feedback comparando tu respuesta con la frase esperada.</p>
-                    <!-- Voice selector -->
-                    <div class="mt-3 flex items-center gap-2">
-                        <label for="voiceSelect" class="text-xs font-bold text-rose-700">Seleccionar voz:</label>
-                        <select id="voiceSelect" class="voice-selector text-xs p-1 rounded border border-rose-200 bg-white"></select>
-                    </div>
-                </div>
-
-                <!-- Task 1: Listen and Repeat (short sentence) -->
-                <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm mb-6 text-center">
-                    <span class="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded uppercase tracking-widest inline-block mb-3">Task 1: Listen and Repeat</span>
-                    <p class="text-sm text-slate-700 mb-3 font-medium">Instrucciones: Escucha la frase, luego haz clic en "Start Speaking" y repítela en voz alta. El sistema comparará tu transcripción con la frase original y te dará feedback.</p>
-
-                    <div class="bg-slate-900 rounded-2xl p-6 text-white">
-                        <button onclick="playAudio('The library is open until midnight.', this, null)" class="bg-white text-slate-900 font-bold py-2 px-6 rounded-full text-sm mb-4 transition hover:bg-slate-100">
-                            <i class="fa-solid fa-volume-high mr-2"></i> Escuchar frase
-                        </button>
-                        <div class="mt-4">
-                            <button onclick="startSpeechRecognition('transcript-1', 'status-1', 'feedback-1', 'The library is open until midnight.')" class="bg-rose-500 hover:bg-rose-600 text-white px-6 py-2 rounded-xl font-bold text-sm transition"><i class="fa-solid fa-microphone mr-2"></i> Start Speaking</button>
-                            <p id="status-1" class="text-xs text-amber-300 font-bold mt-3">Micrófono inactivo</p>
-                            <div class="mt-3 bg-slate-800 p-3 rounded-xl border border-slate-700 text-left">
-                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Transcripción en tiempo real:</span>
-                                <p id="transcript-1" class="text-sm font-mono-custom text-emerald-400 min-h-[24px]">...</p>
-                            </div>
-                            <div id="feedback-1" class="mt-3 text-sm font-bold hidden"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Task 2: Interview (no automatic feedback) -->
-                <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm mb-6 text-center">
-                    <span class="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded uppercase tracking-widest inline-block mb-3">Task 2: Take an Interview</span>
-                    <p class="text-sm text-slate-700 mb-3 font-medium">Instrucciones: Escucha la pregunta del entrevistador y responde con tu propia voz. El sistema transcribirá tu respuesta, pero el análisis semántico y de fluidez requeriría un agente de IA (no incluido en esta demo).</p>
-
-                    <div class="bg-slate-900 rounded-2xl p-6 text-white">
-                        <button onclick="playAudio('What strategies do you use to manage your time effectively during stressful exam periods?', this, null)" class="bg-rose-500 text-white font-bold py-2 px-6 rounded-full text-sm mb-4 transition hover:bg-rose-600">
-                            <i class="fa-solid fa-volume-high mr-2"></i> Escuchar pregunta
-                        </button>
-                        <div class="mt-4">
-                            <button onclick="startSpeechRecognition('transcript-2', 'status-2', null, null)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl font-bold text-sm transition"><i class="fa-solid fa-microphone mr-2"></i> Grabar respuesta</button>
-                            <p id="status-2" class="text-xs text-amber-300 font-bold mt-3">Micrófono inactivo</p>
-                            <div class="mt-3 bg-slate-800 p-3 rounded-xl border border-slate-700 text-left">
-                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Transcripción en tiempo real:</span>
-                                <p id="transcript-2" class="text-sm font-mono-custom text-emerald-400 min-h-[24px]">...</p>
-                            </div>
-                            <p class="text-xs text-slate-400 mt-3 italic">Nota: El feedback detallado (coherencia, vocabulario, pronunciación) requiere un modelo de IA externo.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex justify-end mt-6">
-                    <button onclick="navigateTo('sec-write');" class="bg-slate-800 text-white py-3 px-8 rounded-xl font-bold transition hover:bg-slate-700">Siguiente sección <i class="fa-solid fa-arrow-right ml-2"></i></button>
-                </div>
-            </section>
-
-            <!-- ========== SECTION 5: Writing ========== -->
-            <section id="sec-write" class="section-content">
-                <div class="mb-6">
-                    <span class="bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-emerald-200">Sección 4</span>
-                    <h2 class="text-4xl font-black mt-4 mb-2 text-slate-900 font-display">Writing Tasks (3 tipos)</h2>
-                </div>
-
-                <div class="explanation-box emerald">
-                    <h4 class="font-black text-emerald-800 mb-2 uppercase tracking-widest text-sm"><i class="fa-solid fa-circle-info mr-1"></i> Instrucciones generales</h4>
-                    <p class="text-slate-700 text-sm leading-relaxed">Evalúa tu capacidad de escribir en inglés con precisión gramatical y adecuación al contexto. Incluye construcción de oraciones, redacción de correos electrónicos y participación en foros académicos.</p>
-                </div>
-
-                <!-- 1. Build a Sentence -->
-                <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm mb-6">
-                    <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded uppercase tracking-widest">1. Build a Sentence</span>
-                    <p class="text-sm text-slate-700 mt-2 mb-3 font-medium">Instrucciones: Haz clic en los bloques para ordenarlos y formar una oración gramaticalmente correcta. Cuando estés listo, presiona "Validate Syntax".</p>
-
-                    <div id="word-bank" class="min-h-[50px] bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-wrap mb-4">
-                        <div class="word-block" onclick="moveWord(this)">to submit</div>
-                        <div class="word-block" onclick="moveWord(this)">reminded</div>
-                        <div class="word-block" onclick="moveWord(this)">the students</div>
-                        <div class="word-block" onclick="moveWord(this)">The professor</div>
-                        <div class="word-block" onclick="moveWord(this)">their assignments</div>
-                    </div>
-                    <div id="answer-box" class="min-h-[50px] bg-emerald-50 p-3 rounded-xl border-2 border-emerald-200 flex flex-wrap mb-4 cursor-pointer" onclick="resetWords()"></div>
-                    <div class="text-center">
-                        <button onclick="checkSentence()" class="bg-emerald-600 text-white font-bold py-2 px-6 rounded-lg text-sm hover:bg-emerald-700">Validar sintaxis</button>
-                        <p id="write-fb" class="mt-2 font-bold text-xs hidden"></p>
-                    </div>
-                </div>
-
-                <!-- 2. Write an Email -->
-                <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm mb-6">
-                    <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded uppercase tracking-widest">2. Write an Email</span>
-                    <p class="text-sm text-slate-700 mt-2 mb-3 font-medium">Instrucciones: Escribe un correo breve a tu asesor solicitando un ajuste en tu horario. Incluye saludo, motivo y despedida.</p>
-                    <textarea class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-700 outline-none focus:border-emerald-500 h-24 resize-none" placeholder="Dear Dr. Miller, I am writing to request..."></textarea>
-                </div>
-
-                <!-- 3. Academic Discussion (realistic prompt) -->
-                <div class="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm mb-6">
-                    <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded uppercase tracking-widest">3. Write for an Academic Discussion</span>
-                    <p class="text-sm text-slate-700 mt-2 mb-3 font-medium">Instrucciones: Lee el tema planteado por el profesor y escribe tu contribución al foro universitario. Debes argumentar tu postura con al menos dos razones.</p>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4 text-sm text-slate-700 italic">
-                        <strong>Professor's post:</strong> "In our recent classes we have discussed the future of work. Some argue that remote work will become the norm after the pandemic, while others believe that face‑to‑face interaction is irreplaceable. What is your opinion? Please share your views with specific examples."
-                    </div>
-                    <textarea class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-700 outline-none focus:border-emerald-500 h-32 resize-none" placeholder="In my view, remote work offers flexibility, but it also reduces spontaneous collaboration..."></textarea>
-                </div>
-            </section>
-
-        </div>
-    </main>
-
-    <script>
-        // ================================================================
-        // 1. NAVIGATION
-        // ================================================================
-        const navItems = document.querySelectorAll('.nav-item');
-        const sections = document.querySelectorAll('.section-content');
-
-        function navigateTo(targetId) {
-            navItems.forEach(n => n.classList.remove('active'));
-            sections.forEach(s => s.classList.remove('active'));
-            const targetBtn = document.querySelector(`[data-target="${targetId}"]`);
-            if (targetBtn) targetBtn.classList.add('active');
-            document.getElementById(targetId).classList.add('active');
-            document.getElementById('content-container').parentElement.scrollTo(0, 0);
-        }
-
-        navItems.forEach(item => {
-            item.addEventListener('click', () => { navigateTo(item.getAttribute('data-target')); });
-        });
-
-        // ================================================================
-        // 2. SPEECH SYNTHESIS (Natural Voice)
-        // ================================================================
-        const synth = window.speechSynthesis;
-        let availableVoices = [];
-        let selectedVoice = null;
-
-        // Populate voice selector
-        function loadVoiceList() {
-            const voices = synth.getVoices();
-            availableVoices = voices.filter(v => v.lang.startsWith('en'));
-            const select = document.getElementById('voiceSelect');
-            if (!select) return;
-            select.innerHTML = '';
-            // Prefer natural-sounding voices
-            const preferred = ['Google', 'Samantha', 'Zira', 'David', 'Daniel', 'Microsoft', 'Natural'];
-            const sorted = [...availableVoices].sort((a, b) => {
-                const aScore = preferred.some(p => a.name.includes(p)) ? -1 : 1;
-                const bScore = preferred.some(p => b.name.includes(p)) ? -1 : 1;
-                return aScore - bScore;
-            });
-            sorted.forEach(v => {
-                const opt = document.createElement('option');
-                opt.value = v.name;
-                opt.textContent = v.name + ' (' + v.lang + ')';
-                select.appendChild(opt);
-            });
-            if (sorted.length > 0) {
-                selectedVoice = sorted[0];
-                select.value = selectedVoice.name;
-            }
-            select.addEventListener('change', function() {
-                const found = availableVoices.find(v => v.name === this.value);
-                if (found) selectedVoice = found;
-            });
-        }
-
-        // Initial load and listen for changes
-        loadVoices();
-        if (synth.onvoiceschanged !== undefined) {
-            synth.onvoiceschanged = loadVoices;
-        }
-
-        function loadVoices() {
-            loadVoiceList();
-            // Also set a default if not set
-            if (!selectedVoice && availableVoices.length > 0) {
-                selectedVoice = availableVoices[0];
-            }
-        }
-
-        function playAudio(text, btnElement, revealId) {
-            if (synth.speaking) synth.cancel();
-
+        // --------------------------------------------------------------
+        // 1. HELPER: SPEECH SYNTHESIS (Native fallback)
+        // --------------------------------------------------------------
+        function speakNative(text, onEnd) {
+            if (!window.speechSynthesis) return false;
             const utterance = new SpeechSynthesisUtterance(text);
-            if (selectedVoice) utterance.voice = selectedVoice;
-            utterance.rate = 0.85;    // more natural
+            // pick a natural voice if available
+            const voices = window.speechSynthesis.getVoices();
+            const preferred = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Zira') || v.name.includes('David'))) || voices.find(v => v.lang.startsWith('en'));
+            if (preferred) utterance.voice = preferred;
+            utterance.rate = 0.85;
             utterance.pitch = 1.0;
-            utterance.volume = 1;
-
-            btnElement.classList.add('animate-pulse');
-
-            utterance.onend = () => {
-                btnElement.classList.remove('animate-pulse');
-                if (revealId) {
-                    const el = document.getElementById(revealId);
-                    if (el) {
-                        el.classList.remove('hidden');
-                        el.classList.add('animate-[fadeIn_0.5s]');
-                    }
-                }
-            };
-            utterance.onerror = () => {
-                btnElement.classList.remove('animate-pulse');
-            };
-
-            synth.speak(utterance);
+            if (onEnd) utterance.onend = onEnd;
+            window.speechSynthesis.speak(utterance);
+            return true;
         }
 
-        // ================================================================
-        // 3. SPEECH RECOGNITION
-        // ================================================================
-        function startSpeechRecognition(transcriptId, statusId, feedbackId, expectedText) {
-            const statusEl = document.getElementById(statusId);
-            const transcriptEl = document.getElementById(transcriptId);
-            const feedbackEl = feedbackId ? document.getElementById(feedbackId) : null;
-
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                statusEl.innerText = "Este navegador no soporta reconocimiento de voz. Usa Chrome.";
-                return;
+        // --------------------------------------------------------------
+        // 2. HELPER: GOOGLE TTS (uses your API key)
+        // --------------------------------------------------------------
+        async function speakGoogle(text, apiKey, onEnd) {
+            if (!apiKey || apiKey.trim() === '') return false;
+            try {
+                const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey.trim()}`;
+                const body = {
+                    input: { text: text },
+                    voice: { languageCode: 'en-US', name: 'en-US-Neural2-J' }, // very natural
+                    audioConfig: { audioEncoding: 'MP3' }
+                };
+                const resp = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                if (!resp.ok) {
+                    console.warn('Google TTS error', resp.status);
+                    return false;
+                }
+                const data = await resp.json();
+                const audio = new Audio('data:audio/mp3;base64,' + data.audioContent);
+                audio.onended = onEnd || null;
+                audio.play();
+                return true;
+            } catch (e) {
+                console.warn('Google TTS exception', e);
+                return false;
             }
+        }
 
-            const recognition = new SpeechRecognition();
-            recognition.lang = 'en-US';
-            recognition.interimResults = true;
-            recognition.maxAlternatives = 1;
-            recognition.continuous = false;
+        // --------------------------------------------------------------
+        // 3. MAIN APP COMPONENT
+        // --------------------------------------------------------------
+        function App() {
+            // ----- navigation state -----
+            const [activeSection, setActiveSection] = useState('sec-exec');
 
-            statusEl.innerText = "Escuchando... Habla ahora.";
-            statusEl.className = "text-xs text-rose-400 font-bold mt-3 animate-pulse";
+            // ----- Google API key state (HARDCODED FOR DEMO - DO NOT DO THIS IN PRODUCTION) -----
+            const [apiKey, setApiKey] = useState('AIzaSyBE5FQTYOr6Wad0Farmh9whrl224eAT4Oo');
 
-            let finalTranscript = '';
+            // ----- reading task 1 state -----
+            const [r1, setR1] = useState('');
+            const [r2, setR2] = useState('');
+            const [r3, setR3] = useState('');
+            const [r4, setR4] = useState('');
+            const [wordFeedback, setWordFeedback] = useState('');
 
-            recognition.onresult = (event) => {
-                let interim = '';
-                let final = '';
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
-                        final += event.results[i][0].transcript;
-                    } else {
-                        interim += event.results[i][0].transcript;
+            // ----- MCQ states (to reset highlights) -----
+            const [mcqState, setMcqState] = useState({});
+
+            // ----- speaking states -----
+            const [transcript1, setTranscript1] = useState('...');
+            const [status1, setStatus1] = useState('Microphone inactive');
+            const [feedback1, setFeedback1] = useState('');
+
+            const [transcript2, setTranscript2] = useState('...');
+            const [status2, setStatus2] = useState('Microphone inactive');
+
+            // ----- writing sentence builder -----
+            const [wordBank, setWordBank] = useState([
+                { id: 1, text: 'to submit' },
+                { id: 2, text: 'reminded' },
+                { id: 3, text: 'the students' },
+                { id: 4, text: 'The professor' },
+                { id: 5, text: 'their assignments' }
+            ]);
+            const [sentenceBox, setSentenceBox] = useState([]);
+            const [sentenceFeedback, setSentenceFeedback] = useState('');
+
+            // ----- speech recognition refs -----
+            const recognitionRef = useRef(null);
+
+            // ----- navigation -----
+            const navigateTo = (id) => setActiveSection(id);
+
+            // ----- play audio wrapper (checks Google key first) -----
+            const playAudio = (text, revealId) => {
+                // stop any ongoing speech
+                if (window.speechSynthesis) window.speechSynthesis.cancel();
+
+                const onEnd = () => {
+                    if (revealId) {
+                        const el = document.getElementById(revealId);
+                        if (el) {
+                            el.classList.remove('hidden');
+                            el.classList.add('animate-[fadeIn_0.5s]');
+                        }
                     }
-                }
-                finalTranscript = final || interim;
-                transcriptEl.innerText = finalTranscript;
-            };
+                };
 
-            recognition.onerror = (event) => {
-                statusEl.innerText = "Error: " + event.error;
-                statusEl.className = "text-xs text-red-400 font-bold mt-3";
-                // If it's a security error (not HTTPS), suggest
-                if (event.error === 'not-allowed') {
-                    statusEl.innerText = "Permiso denegado. Asegúrate de usar HTTPS o localhost y conceder acceso al micrófono.";
-                }
-            };
-
-            recognition.onend = () => {
-                statusEl.innerText = "Reconocimiento completado.";
-                statusEl.className = "text-xs text-emerald-400 font-bold mt-3";
-
-                if (feedbackEl && expectedText) {
-                    const spoken = finalTranscript.trim().toLowerCase();
-                    const expected = expectedText.trim().toLowerCase();
-                    const spokenWords = spoken.split(/\s+/).filter(w => w.length > 0);
-                    const expectedWords = expected.split(/\s+/).filter(w => w.length > 0);
-                    let matchCount = 0;
-                    expectedWords.forEach(word => {
-                        if (spokenWords.includes(word)) matchCount++;
+                // try Google TTS first if key is present
+                if (apiKey && apiKey.trim() !== '') {
+                    speakGoogle(text, apiKey, onEnd).then(success => {
+                        if (!success) {
+                            // fallback to native
+                            speakNative(text, onEnd);
+                        }
                     });
-                    const score = Math.round((matchCount / expectedWords.length) * 100);
-
-                    feedbackEl.classList.remove('hidden');
-                    if (score >= 70) {
-                        feedbackEl.innerHTML = `<span class="feedback-success">✅ ¡Excelente! Coincidencia del ${score}% con la frase original.</span>`;
-                    } else if (score >= 40) {
-                        feedbackEl.innerHTML = `<span class="feedback-warning">⚠️ Aceptable (${score}%). Revisa la pronunciación y el orden de las palabras.</span>`;
-                    } else {
-                        feedbackEl.innerHTML = `<span class="feedback-error">❌ Baja coincidencia (${score}%). Intenta repetir la frase más claramente.</span>`;
-                    }
-                }
-            };
-
-            recognition.start();
-        }
-
-        // ================================================================
-        // 4. READING TASK 1: Complete the Words
-        // ================================================================
-        function checkCompleteWords() {
-            const r1 = document.getElementById('r-1');
-            const r2 = document.getElementById('r-2');
-            const r3 = document.getElementById('r-3');
-            const r4 = document.getElementById('r-4');
-            const fb = document.getElementById('word-feedback');
-
-            const validate = (el, ans) => {
-                if (el.value.toLowerCase().trim() === ans) {
-                    el.classList.add('correct');
-                    el.classList.remove('wrong');
                 } else {
-                    el.classList.add('wrong');
-                    el.classList.remove('correct');
+                    speakNative(text, onEnd);
                 }
             };
 
-            validate(r1, 'signed');
-            validate(r2, 'timize');
-            validate(r3, 'venience');
-            validate(r4, 'ality');    // corrected: after "qu" comes "ality" to form "quality"
+            // ----- Speech Recognition logic -----
+            const startSpeechRecognition = (transcriptId, statusId, feedbackId, expectedText) => {
+                const setTranscript = transcriptId === 'transcript-1' ? setTranscript1 : setTranscript2;
+                const setStatus = statusId === 'status-1' ? setStatus1 : setStatus2;
+                const setFeedback = feedbackId === 'feedback-1' ? setFeedback1 : null;
 
-            fb.classList.remove('hidden');
-            fb.innerText = "¡Revisado! Respuestas correctas: designed, optimize, convenience, quality.";
-            fb.className = "text-xs font-bold mt-2 text-indigo-600";
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) {
+                    setStatus('Speech recognition not supported. Use Chrome.');
+                    return;
+                }
+
+                // cancel previous
+                if (recognitionRef.current) {
+                    try { recognitionRef.current.abort(); } catch (e) {}
+                }
+
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'en-US';
+                recognition.interimResults = true;
+                recognition.maxAlternatives = 1;
+                recognition.continuous = false;
+
+                setStatus('Listening... Speak now.');
+                let finalTranscript = '';
+
+                recognition.onresult = (event) => {
+                    let interim = '';
+                    let final = '';
+                    for (let i = event.resultIndex; i < event.results.length; ++i) {
+                        if (event.results[i].isFinal) final += event.results[i][0].transcript;
+                        else interim += event.results[i][0].transcript;
+                    }
+                    finalTranscript = final || interim;
+                    setTranscript(finalTranscript);
+                };
+
+                recognition.onerror = (event) => {
+                    setStatus('Error: ' + event.error);
+                    if (event.error === 'not-allowed') setStatus('Permission denied. Use HTTPS/localhost.');
+                };
+
+                recognition.onend = () => {
+                    setStatus('Recognition complete.');
+                    if (setFeedback && expectedText) {
+                        const spoken = finalTranscript.trim().toLowerCase();
+                        const expected = expectedText.trim().toLowerCase();
+                        const spokenWords = spoken.split(/\s+/).filter(w => w.length > 0);
+                        const expectedWords = expected.split(/\s+/).filter(w => w.length > 0);
+                        let match = 0;
+                        expectedWords.forEach(w => { if (spokenWords.includes(w)) match++; });
+                        const score = Math.round((match / expectedWords.length) * 100);
+                        let msg = '';
+                        if (score >= 70) msg = `✅ Excellent! ${score}% match with the original.`;
+                        else if (score >= 40) msg = `⚠️ Acceptable (${score}%). Check pronunciation and order.`;
+                        else msg = `❌ Low match (${score}%). Try repeating more clearly.`;
+                        setFeedback(msg);
+                    }
+                };
+
+                recognition.start();
+                recognitionRef.current = recognition;
+            };
+
+            // ----- Reading: Complete the Words -----
+            const checkCompleteWords = () => {
+                const answers = { r1: 'signed', r2: 'timize', r3: 'venience', r4: 'ality' };
+                const inputs = { r1, r2, r3, r4 };
+                let allCorrect = true;
+                Object.keys(answers).forEach(key => {
+                    const el = document.getElementById(key);
+                    if (el) {
+                        if (inputs[key].toLowerCase().trim() === answers[key]) {
+                            el.classList.add('correct');
+                            el.classList.remove('wrong');
+                        } else {
+                            el.classList.add('wrong');
+                            el.classList.remove('correct');
+                            allCorrect = false;
+                        }
+                    }
+                });
+                setWordFeedback(allCorrect ? 'All correct! Designed, optimize, convenience, quality.' : 'Some answers are incorrect. Try again.');
+            };
+
+            // ----- MCQ logic -----
+            const handleMCQ = (btn, isCorrect, containerId) => {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+                const btns = container.querySelectorAll('.mcq-btn');
+                btns.forEach(b => b.classList.remove('selected-correct', 'selected-wrong'));
+                if (isCorrect) btn.classList.add('selected-correct');
+                else btn.classList.add('selected-wrong');
+            };
+
+            // ----- Sentence Builder -----
+            const moveWord = (id) => {
+                const word = wordBank.find(w => w.id === id);
+                if (!word) return;
+                setWordBank(prev => prev.filter(w => w.id !== id));
+                setSentenceBox(prev => [...prev, word]);
+                setSentenceFeedback('');
+            };
+
+            const resetSentence = () => {
+                setSentenceBox([]);
+                setWordBank(prev => [...prev, ...sentenceBox]);
+                setSentenceFeedback('');
+            };
+
+            const checkSentence = () => {
+                const correct = 'The professor reminded the students to submit their assignments';
+                const current = sentenceBox.map(w => w.text).join(' ');
+                if (current.trim() === correct) {
+                    setSentenceFeedback('✅ Perfect syntax!');
+                } else {
+                    setSentenceFeedback('❌ Incorrect order. Click the box to reset.');
+                }
+            };
+
+            // ----- Sidebar nav items -----
+            const navItems = [
+                { id: 'sec-exec', icon: 'fa-chart-pie', label: 'Overview' },
+                { id: 'sec-read', icon: 'fa-book-open', label: 'Reading (3 Tasks)' },
+                { id: 'sec-listen', icon: 'fa-headphones', label: 'Listening (4 Tasks)' },
+                { id: 'sec-speak', icon: 'fa-microphone', label: 'Speaking (2 Tasks)' },
+                { id: 'sec-write', icon: 'fa-keyboard', label: 'Writing (3 Tasks)' }
+            ];
+
+            // --------------------------------------------------------------
+            // RENDER
+            // --------------------------------------------------------------
+            return (
+                <div className="h-screen flex overflow-hidden">
+                    {/* SIDEBAR */}
+                    <aside className="w-72 glass-panel border-r border-slate-200 flex flex-col justify-between hidden md:flex z-20 relative bg-white/95">
+                        <div>
+                            <div className="p-6 bg-gradient-to-b from-indigo-50 to-transparent border-b border-indigo-100">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/ETS_logo.svg/512px-ETS_logo.svg.png" alt="ETS" className="h-6 mb-2 opacity-50" />
+                                <h1 className="text-xl font-black text-slate-800 font-display">TOEFL iBT 2026</h1>
+                                <p className="text-xs text-slate-600 mt-1 font-semibold">15‑Class Course Proposal</p>
+                            </div>
+                            <nav className="mt-4 flex flex-col gap-1 px-2">
+                                {navItems.map(item => (
+                                    <button
+                                        key={item.id}
+                                        className={`nav-item text-left px-4 py-3 text-sm flex items-center gap-3 rounded-lg ${activeSection === item.id ? 'active' : ''}`}
+                                        onClick={() => navigateTo(item.id)}
+                                    >
+                                        <i className={`fa-solid ${item.icon} text-slate-400 w-4`}></i>
+                                        {item.label}
+                                    </button>
+                                ))}
+                            </nav>
+                        </div>
+                        <div className="p-4 border-t border-slate-200 text-xs text-slate-400">
+                            <i className="fa-solid fa-microchip mr-1"></i> Web Speech + Google TTS
+                        </div>
+                    </aside>
+
+                    {/* MAIN CONTENT */}
+                    <main className="flex-1 flex flex-col h-full overflow-y-auto relative bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
+                        <div className="p-6 md:p-12 max-w-5xl mx-auto w-full pb-24">
+
+                            {/* --- Google API Key input (floating) - Pre-filled with your key! --- */}
+                            <div className="mb-6 flex flex-wrap items-center gap-3 p-3 bg-white rounded-xl border border-slate-200 shadow-sm">
+                                <i className="fa-solid fa-key text-indigo-500"></i>
+                                <input
+                                    type="password"
+                                    placeholder="Enter Google Cloud TTS API Key for natural voice"
+                                    className="flex-1 min-w-[200px] text-sm border border-slate-300 rounded-lg px-3 py-1 outline-none focus:border-indigo-400"
+                                    value={apiKey}
+                                    onChange={(e) => setApiKey(e.target.value)}
+                                />
+                                <span className="text-[10px] text-slate-400 italic">(uses en-US-Neural2-J)</span>
+                            </div>
+
+                            {/* ========== SECTION: Overview ========== */}
+                            {activeSection === 'sec-exec' && (
+                                <section className="section-content">
+                                    <div className="mb-10">
+                                        <span className="bg-indigo-100 text-indigo-800 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-indigo-200">Proposal Presentation</span>
+                                        <h2 className="text-5xl font-black mt-5 mb-4 tracking-tight text-slate-900 font-display">TOEFL iBT 2026 Structure</h2>
+                                        <p className="text-slate-600 text-xl font-medium leading-relaxed max-w-3xl">A complete walkthrough of all updated tasks, with clear instructions, natural voice synthesis, and integrated speech recognition.</p>
+                                    </div>
+                                    <div className="grid md:grid-cols-2 gap-6 mb-8">
+                                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                                            <h3 className="text-lg font-black text-slate-800 mb-2"><i className="fa-solid fa-book-open text-blue-500 mr-2"></i> Reading (50 items / ~30m)</h3>
+                                            <p className="text-sm text-slate-600">Complete the Words, Read in Daily Life, Academic Passages.</p>
+                                        </div>
+                                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                                            <h3 className="text-lg font-black text-slate-800 mb-2"><i className="fa-solid fa-headphones text-amber-500 mr-2"></i> Listening (47 items / ~29m)</h3>
+                                            <p className="text-sm text-slate-600">Listen & Choose, Conversations, Announcements, Academic Talks.</p>
+                                        </div>
+                                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                                            <h3 className="text-lg font-black text-slate-800 mb-2"><i className="fa-solid fa-microphone text-rose-500 mr-2"></i> Speaking (11 items / ~8m)</h3>
+                                            <p className="text-sm text-slate-600">Listen & Repeat, Take an Interview (with voice recognition).</p>
+                                        </div>
+                                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                                            <h3 className="text-lg font-black text-slate-800 mb-2"><i className="fa-solid fa-keyboard text-emerald-500 mr-2"></i> Writing (12 items / ~23m)</h3>
+                                            <p className="text-sm text-slate-600">Build a Sentence, Write an Email, Academic Discussion.</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-center mt-8">
+                                        <button onClick={() => navigateTo('sec-read')} className="btn-primary py-4 px-10 rounded-xl font-black text-lg transition shadow-xl">
+                                            Explore Sections <i className="fa-solid fa-arrow-right ml-2"></i>
+                                        </button>
+                                    </div>
+                                </section>
+                            )}
+
+                            {/* ========== SECTION: Reading ========== */}
+                            {activeSection === 'sec-read' && (
+                                <section className="section-content">
+                                    <div className="mb-6">
+                                        <span className="bg-blue-100 text-blue-800 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-blue-200">Section 1</span>
+                                        <h2 className="text-4xl font-black mt-4 mb-2 text-slate-900 font-display">Reading Tasks</h2>
+                                    </div>
+                                    <div className="explanation-box">
+                                        <h4 className="font-black text-blue-800 mb-2 uppercase tracking-widest text-sm"><i className="fa-solid fa-circle-info mr-1"></i> General Instructions</h4>
+                                        <p className="text-slate-700 text-sm leading-relaxed">This section measures your ability to understand written English. It consists of 50 questions and lasts ~30 minutes. Below are 3 representative tasks.</p>
+                                    </div>
+
+                                    {/* Task 1 */}
+                                    <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm mb-6">
+                                        <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded uppercase tracking-widest">Task 1: Complete the Words</span>
+                                        <p className="text-sm text-slate-700 mt-2 mb-3 font-medium">Instructions: Read the text and type the missing letters into each gap to form complete words. Use the context to guess the correct answer.</p>
+                                        <div className="text-lg leading-loose text-slate-800 max-w-2xl mx-auto bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                                            The updated test measures proficiency. <br />
+                                            It is de<input type="text" id="r1" className="missing-input font-mono-custom" maxLength="6" placeholder="______" value={r1} onChange={(e) => setR1(e.target.value)} /> to op<input type="text" id="r2" className="missing-input font-mono-custom" maxLength="6" placeholder="______" value={r2} onChange={(e) => setR2(e.target.value)} /> both con<input type="text" id="r3" className="missing-input font-mono-custom" maxLength="10" placeholder="__________" value={r3} onChange={(e) => setR3(e.target.value)} /> and qu<input type="text" id="r4" className="missing-input font-mono-custom" maxLength="5" placeholder="_____" value={r4} onChange={(e) => setR4(e.target.value)} />.
+                                        </div>
+                                        <div className="text-center mt-4">
+                                            <button onClick={checkCompleteWords} className="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg text-sm hover:bg-blue-700">Validate Answers</button>
+                                            {wordFeedback && <p className="text-xs font-bold mt-2 text-indigo-600">{wordFeedback}</p>}
+                                        </div>
+                                    </div>
+
+                                    {/* Task 2 */}
+                                    <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm mb-6">
+                                        <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded uppercase tracking-widest">Task 2: Read in Daily Life</span>
+                                        <p className="text-sm text-slate-700 mt-2 mb-3 font-medium">Instructions: Read the notice and select the correct answer.</p>
+                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4 text-sm text-slate-700 italic">
+                                            "Notice: The library basement will be closed for electrical maintenance on Tuesday from 8:00 AM to 12:00 PM. Alternative study spaces are available on the 3rd floor and in the annex building (open 24h)."
+                                        </div>
+                                        <p className="font-bold text-slate-800 text-sm mb-3">Where can students study on Tuesday morning?</p>
+                                        <div className="space-y-2" id="read-mcq1">
+                                            <button className="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onClick={(e) => handleMCQ(e.currentTarget, false, 'read-mcq1')}>A) In the library basement.</button>
+                                            <button className="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onClick={(e) => handleMCQ(e.currentTarget, true, 'read-mcq1')}>B) On the 3rd floor or in the annex.</button>
+                                            <button className="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onClick={(e) => handleMCQ(e.currentTarget, false, 'read-mcq1')}>C) In the main reading hall.</button>
+                                        </div>
+                                    </div>
+
+                                    {/* Task 3 */}
+                                    <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm mb-6">
+                                        <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded uppercase tracking-widest">Task 3: Academic Passage</span>
+                                        <p className="text-sm text-slate-700 mt-2 mb-3 font-medium">Instructions: Read the academic excerpt and select the best statement of the main idea.</p>
+                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4 text-sm text-slate-700 italic">
+                                            "Photosynthesis in understory plants depends heavily on sunflecks—brief spots of direct sunlight filtering through the upper canopy. These intermittent bursts account for up to 50% of total carbon assimilation in these species. Moreover, they allow plants to exploit short periods of high irradiance without suffering photoinhibition."
+                                        </div>
+                                        <p className="font-bold text-slate-800 text-sm mb-3">What is the primary role of sunflecks for understory plants?</p>
+                                        <div className="space-y-2" id="read-mcq2">
+                                            <button className="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onClick={(e) => handleMCQ(e.currentTarget, true, 'read-mcq2')}>A) Providing substantial energy for carbon assimilation.</button>
+                                            <button className="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onClick={(e) => handleMCQ(e.currentTarget, false, 'read-mcq2')}>B) Preventing foliage damage from intense heat.</button>
+                                            <button className="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onClick={(e) => handleMCQ(e.currentTarget, false, 'read-mcq2')}>C) Increasing competition with other plants for light.</button>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-end mt-6">
+                                        <button onClick={() => navigateTo('sec-listen')} className="bg-slate-800 text-white py-3 px-8 rounded-xl font-bold transition hover:bg-slate-700">Next Section <i className="fa-solid fa-arrow-right ml-2"></i></button>
+                                    </div>
+                                </section>
+                            )}
+
+                            {/* ========== SECTION: Listening ========== */}
+                            {activeSection === 'sec-listen' && (
+                                <section className="section-content">
+                                    <div className="mb-6">
+                                        <span className="bg-amber-100 text-amber-800 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-amber-200">Section 2</span>
+                                        <h2 className="text-4xl font-black mt-4 mb-2 text-slate-900 font-display">Listening Tasks (4 types)</h2>
+                                    </div>
+                                    <div className="explanation-box amber">
+                                        <h4 className="font-black text-amber-800 mb-2 uppercase tracking-widest text-sm"><i className="fa-solid fa-circle-info mr-1"></i> General Instructions</h4>
+                                        <p className="text-slate-700 text-sm leading-relaxed">This section tests your listening comprehension in different contexts. Click the play button to hear each audio, then select the correct answer.</p>
+                                    </div>
+
+                                    {/* Listening 1 */}
+                                    <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm mb-6">
+                                        <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded uppercase tracking-widest">1. Listen and Choose a Response</span>
+                                        <p className="text-sm text-slate-700 mt-2 mb-3 font-medium">Instruction: Listen to the question and choose the most appropriate response.</p>
+                                        <div className="mt-4 flex items-center gap-4">
+                                            <button onClick={() => playAudio('Could you let me know where the registrar office is located?', 'l1-box')} className="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center shrink-0 hover:scale-110 transition"><i className="fa-solid fa-play"></i></button>
+                                            <span className="text-xs text-slate-500 font-bold uppercase">Click to hear audio</span>
+                                        </div>
+                                        <div id="l1-box" className="hidden mt-4 pt-4 border-t border-slate-100">
+                                            <p className="text-sm font-bold text-slate-800 mb-2">Select the correct response:</p>
+                                            <div className="space-y-2" id="l1-mcq">
+                                                <button className="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onClick={(e) => handleMCQ(e.currentTarget, false, 'l1-mcq')}>A) It is due next Friday.</button>
+                                                <button className="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onClick={(e) => handleMCQ(e.currentTarget, true, 'l1-mcq')}>B) Certainly, it is on the second floor of Hogg Hall.</button>
+                                                <button className="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onClick={(e) => handleMCQ(e.currentTarget, false, 'l1-mcq')}>C) Yes, the admissions office is closed today.</button>
+                                                <button className="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onClick={(e) => handleMCQ(e.currentTarget, false, 'l1-mcq')}>D) No, registration is online only.</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Listening 2 */}
+                                    <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm mb-6">
+                                        <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded uppercase tracking-widest">2. Listen to a Conversation</span>
+                                        <p className="text-sm text-slate-700 mt-2 mb-3 font-medium">Instruction: Listen to the conversation and answer the question.</p>
+                                        <div className="mt-4 flex items-center gap-4">
+                                            <button onClick={() => playAudio('Student: Professor, I missed the lab session yesterday because of a doctor appointment. Can I make up the experiment? Professor: Sure, stop by during my office hours on Thursday.', 'l2-box')} className="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center shrink-0 hover:scale-110 transition"><i className="fa-solid fa-play"></i></button>
+                                            <span className="text-xs text-slate-500 font-bold uppercase">Click to hear conversation</span>
+                                        </div>
+                                        <div id="l2-box" className="hidden mt-4 pt-4 border-t border-slate-100">
+                                            <p className="text-sm font-bold text-slate-800 mb-2">What does the professor invite the student to do?</p>
+                                            <div className="space-y-2" id="l2-mcq">
+                                                <button className="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onClick={(e) => handleMCQ(e.currentTarget, true, 'l2-mcq')}>A) Visit during office hours on Thursday.</button>
+                                                <button className="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onClick={(e) => handleMCQ(e.currentTarget, false, 'l2-mcq')}>B) Complete an online makeup quiz.</button>
+                                                <button className="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onClick={(e) => handleMCQ(e.currentTarget, false, 'l2-mcq')}>C) Attend an extra lab session on Saturday.</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Listening 3 */}
+                                    <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm mb-6">
+                                        <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded uppercase tracking-widest">3. Listen to an Announcement</span>
+                                        <p className="text-sm text-slate-700 mt-2 mb-3 font-medium">Instruction: Listen to the announcement and answer the question.</p>
+                                        <div className="mt-4 flex items-center gap-4">
+                                            <button onClick={() => playAudio('Attention students, parking lot B will be closed this weekend for repaving. All vehicles must be removed by midnight Friday.', 'l3-box')} className="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center shrink-0 hover:scale-110 transition"><i className="fa-solid fa-play"></i></button>
+                                            <span className="text-xs text-slate-500 font-bold uppercase">Click to hear announcement</span>
+                                        </div>
+                                        <div id="l3-box" className="hidden mt-4 pt-4 border-t border-slate-100">
+                                            <p className="text-sm font-bold text-slate-800 mb-2">What action must students take?</p>
+                                            <div className="space-y-2" id="l3-mcq">
+                                                <button className="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onClick={(e) => handleMCQ(e.currentTarget, true, 'l3-mcq')}>A) Remove vehicles from lot B by midnight Friday.</button>
+                                                <button className="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onClick={(e) => handleMCQ(e.currentTarget, false, 'l3-mcq')}>B) Park only in lot B during the weekend.</button>
+                                                <button className="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onClick={(e) => handleMCQ(e.currentTarget, false, 'l3-mcq')}>C) Use public transportation on the weekend.</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Listening 4 */}
+                                    <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm mb-6">
+                                        <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded uppercase tracking-widest">4. Listen to an Academic Talk</span>
+                                        <p className="text-sm text-slate-700 mt-2 mb-3 font-medium">Instruction: Listen to the academic excerpt and answer the question.</p>
+                                        <div className="mt-4 flex items-center gap-4">
+                                            <button onClick={() => playAudio('Geological stratification reveals that urban heat islands are intensified not just by concrete surfaces, but crucially by the absence of vegetative evapotranspiration.', 'l4-box')} className="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center shrink-0 hover:scale-110 transition"><i className="fa-solid fa-play"></i></button>
+                                            <span className="text-xs text-slate-500 font-bold uppercase">Click to hear academic excerpt</span>
+                                        </div>
+                                        <div id="l4-box" className="hidden mt-4 pt-4 border-t border-slate-100">
+                                            <p className="text-sm font-bold text-slate-800 mb-2">According to the speaker, what is a primary driver of urban heat islands?</p>
+                                            <div className="space-y-2" id="l4-mcq">
+                                                <button className="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onClick={(e) => handleMCQ(e.currentTarget, false, 'l4-mcq')}>A) High industrial vehicle traffic.</button>
+                                                <button className="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onClick={(e) => handleMCQ(e.currentTarget, true, 'l4-mcq')}>B) The lack of vegetative evaporative cooling.</button>
+                                                <button className="mcq-btn w-full text-left p-3 rounded-lg border border-slate-200 text-sm" onClick={(e) => handleMCQ(e.currentTarget, false, 'l4-mcq')}>C) The dark color of roofs and pavements.</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-end mt-6">
+                                        <button onClick={() => navigateTo('sec-speak')} className="bg-slate-800 text-white py-3 px-8 rounded-xl font-bold transition hover:bg-slate-700">Next Section <i className="fa-solid fa-arrow-right ml-2"></i></button>
+                                    </div>
+                                </section>
+                            )}
+
+                            {/* ========== SECTION: Speaking ========== */}
+                            {activeSection === 'sec-speak' && (
+                                <section className="section-content">
+                                    <div className="mb-6">
+                                        <span className="bg-rose-100 text-rose-800 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-rose-200">Section 3</span>
+                                        <h2 className="text-4xl font-black mt-4 mb-2 text-slate-900 font-display">Speaking Tasks (with voice recognition)</h2>
+                                    </div>
+                                    <div className="explanation-box rose">
+                                        <h4 className="font-black text-rose-800 mb-2 uppercase tracking-widest text-sm"><i className="fa-solid fa-circle-info mr-1"></i> General Instructions</h4>
+                                        <p className="text-slate-700 text-sm leading-relaxed">This section evaluates your spoken English. It consists of 11 items in ~8 minutes. Use your microphone. The first task gives automatic feedback by comparing your speech to the original text.</p>
+                                    </div>
+
+                                    {/* Speaking 1 */}
+                                    <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm mb-6 text-center">
+                                        <span className="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded uppercase tracking-widest inline-block mb-3">Task 1: Listen and Repeat</span>
+                                        <p className="text-sm text-slate-700 mb-3 font-medium">Instructions: Listen to the short sentence, then click "Start Speaking" and repeat it aloud. The system will compare your transcription and give feedback.</p>
+                                        <div className="bg-slate-900 rounded-2xl p-6 text-white">
+                                            <button onClick={() => playAudio('The library is open until midnight.', null)} className="bg-white text-slate-900 font-bold py-2 px-6 rounded-full text-sm mb-4 transition hover:bg-slate-100">
+                                                <i className="fa-solid fa-volume-high mr-2"></i> Play Prompt
+                                            </button>
+                                            <div className="mt-4">
+                                                <button onClick={() => startSpeechRecognition('transcript-1', 'status-1', 'feedback-1', 'The library is open until midnight.')} className="bg-rose-500 hover:bg-rose-600 text-white px-6 py-2 rounded-xl font-bold text-sm transition">
+                                                    <i className="fa-solid fa-microphone mr-2"></i> Start Speaking
+                                                </button>
+                                                <p id="status-1" className="text-xs text-amber-300 font-bold mt-3">{status1}</p>
+                                                <div className="mt-3 bg-slate-800 p-3 rounded-xl border border-slate-700 text-left">
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Live AI Transcription:</span>
+                                                    <p id="transcript-1" className="text-sm font-mono-custom text-emerald-400 min-h-[24px]">{transcript1}</p>
+                                                </div>
+                                                {feedback1 && <div id="feedback-1" className="mt-3 text-sm font-bold">{feedback1}</div>}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Speaking 2 */}
+                                    <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm mb-6 text-center">
+                                        <span className="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded uppercase tracking-widest inline-block mb-3">Task 2: Take an Interview</span>
+                                        <p className="text-sm text-slate-700 mb-3 font-medium">Instructions: Listen to the interviewer's question and respond with your own voice. The system will transcribe your answer, but deep semantic analysis would require an external AI agent.</p>
+                                        <div className="bg-slate-900 rounded-2xl p-6 text-white">
+                                            <button onClick={() => playAudio('What strategies do you use to manage your time effectively during stressful exam periods?', null)} className="bg-rose-500 text-white font-bold py-2 px-6 rounded-full text-sm mb-4 transition hover:bg-rose-600">
+                                                <i className="fa-solid fa-volume-high mr-2"></i> Play Question
+                                            </button>
+                                            <div className="mt-4">
+                                                <button onClick={() => startSpeechRecognition('transcript-2', 'status-2', null, null)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl font-bold text-sm transition">
+                                                    <i className="fa-solid fa-microphone mr-2"></i> Record Answer
+                                                </button>
+                                                <p id="status-2" className="text-xs text-amber-300 font-bold mt-3">{status2}</p>
+                                                <div className="mt-3 bg-slate-800 p-3 rounded-xl border border-slate-700 text-left">
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Live AI Transcription:</span>
+                                                    <p id="transcript-2" className="text-sm font-mono-custom text-emerald-400 min-h-[24px]">{transcript2}</p>
+                                                </div>
+                                                <p className="text-xs text-slate-400 mt-3 italic">Note: Detailed feedback (coherence, vocabulary, pronunciation) requires a specialized AI model.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-end mt-6">
+                                        <button onClick={() => navigateTo('sec-write')} className="bg-slate-800 text-white py-3 px-8 rounded-xl font-bold transition hover:bg-slate-700">Next Section <i className="fa-solid fa-arrow-right ml-2"></i></button>
+                                    </div>
+                                </section>
+                            )}
+
+                            {/* ========== SECTION: Writing ========== */}
+                            {activeSection === 'sec-write' && (
+                                <section className="section-content">
+                                    <div className="mb-6">
+                                        <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-emerald-200">Section 4</span>
+                                        <h2 className="text-4xl font-black mt-4 mb-2 text-slate-900 font-display">Writing Tasks (3 types)</h2>
+                                    </div>
+                                    <div className="explanation-box emerald">
+                                        <h4 className="font-black text-emerald-800 mb-2 uppercase tracking-widest text-sm"><i className="fa-solid fa-circle-info mr-1"></i> General Instructions</h4>
+                                        <p className="text-slate-700 text-sm leading-relaxed">This section evaluates your ability to write in English with grammatical accuracy and contextual appropriateness. Includes sentence building, email writing, and academic discussion.</p>
+                                    </div>
+
+                                    {/* Writing 1 */}
+                                    <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm mb-6">
+                                        <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded uppercase tracking-widest">1. Build a Sentence</span>
+                                        <p className="text-sm text-slate-700 mt-2 mb-3 font-medium">Instructions: Click the blocks to arrange them into a grammatically correct sentence. Press "Validate Syntax" when ready.</p>
+                                        <div className="min-h-[50px] bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-wrap mb-4">
+                                            {wordBank.map(w => (
+                                                <div key={w.id} className="word-block" onClick={() => moveWord(w.id)}>{w.text}</div>
+                                            ))}
+                                        </div>
+                                        <div className="min-h-[50px] bg-emerald-50 p-3 rounded-xl border-2 border-emerald-200 flex flex-wrap mb-4 cursor-pointer" onClick={resetSentence}>
+                                            {sentenceBox.map(w => (
+                                                <div key={w.id} className="word-block selected">{w.text}</div>
+                                            ))}
+                                        </div>
+                                        <div className="text-center">
+                                            <button onClick={checkSentence} className="bg-emerald-600 text-white font-bold py-2 px-6 rounded-lg text-sm hover:bg-emerald-700">Validate Syntax</button>
+                                            {sentenceFeedback && <p className="mt-2 font-bold text-xs">{sentenceFeedback}</p>}
+                                        </div>
+                                    </div>
+
+                                    {/* Writing 2 */}
+                                    <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm mb-6">
+                                        <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded uppercase tracking-widest">2. Write an Email</span>
+                                        <p className="text-sm text-slate-700 mt-2 mb-3 font-medium">Instructions: Write a brief email to your advisor requesting a schedule adjustment. Include a greeting, the reason, and a closing.</p>
+                                        <textarea className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-700 outline-none focus:border-emerald-500 h-24 resize-none" placeholder="Dear Dr. Miller, I am writing to request..."></textarea>
+                                    </div>
+
+                                    {/* Writing 3 - Academic Discussion (exact format from the image) */}
+                                    <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm mb-6">
+                                        <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded uppercase tracking-widest">3. Write for an Academic Discussion</span>
+                                        <p className="text-sm text-slate-700 mt-2 mb-3 font-medium">
+                                            <strong>Instructions:</strong> Your professor is teaching a class on political science. Write a post responding to the professor's question. In your response, you should:
+                                            <ul className="list-disc list-inside ml-4 mt-1">
+                                                <li>express and support your personal opinion</li>
+                                                <li>make a contribution to the discussion in your own words</li>
+                                            </ul>
+                                            An effective response will contain at least 100 words. You have ten minutes to complete this task.
+                                        </p>
+
+                                        {/* Professor */}
+                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-3">
+                                            <p className="font-bold text-slate-800">Dr. Jones:</p>
+                                            <p className="text-sm text-slate-700">Today we're going to talk about the debate between economic growth and protecting the environment. Economic growth creates new jobs and gives people money they can use to improve their lives. On the other hand, if we protect the environment it can be enjoyed both by ourselves and future generations. If you had to choose between prioritizing economic growth or protecting the environment, which one would you pick? Why?</p>
+                                        </div>
+
+                                        {/* Alex (Student 1) */}
+                                        <div className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-400 mb-2">
+                                            <p className="font-bold text-blue-800">Alex:</p>
+                                            <p className="text-sm text-slate-700">I would prioritize the environment. We only have one planet and if we don't take care of it, we won't have pleasant lives in the future. Economic growth can be important, but not at the expense of the environment. I think we need to shift towards more environmentally-friendly economic practices, such as investing in renewable energy and promoting environmentally-friendly technologies. We'll all live much healthier lives if the world around us is clean.</p>
+                                        </div>
+
+                                        {/* Kelly (Student 2) */}
+                                        <div className="bg-amber-50 p-3 rounded-lg border-l-4 border-amber-400 mb-4">
+                                            <p className="font-bold text-amber-800">Kelly:</p>
+                                            <p className="text-sm text-slate-700">While I agree with Alex that environmental sustainability is important, I think that economic growth is the only way to solve many of the social and economic problems we face. We need a strong economy to create jobs, reduce poverty, and improve standards of living. Not only that, but if companies grow stronger and more profitable, they might eventually develop new technologies that solve our environmental problems.</p>
+                                        </div>
+
+                                        {/* Your response */}
+                                        <p className="text-sm font-bold text-slate-800 mb-2">Your response (at least 100 words):</p>
+                                        <textarea className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-700 outline-none focus:border-emerald-500 h-40 resize-none" placeholder="In my view, the environment must take precedence because..."></textarea>
+                                    </div>
+                                </section>
+                            )}
+                        </div>
+                    </main>
+                </div>
+            );
         }
 
-        // ================================================================
-        // 5. MCQ LOGIC
-        // ================================================================
-        function checkMCQ(btn, isCorrect, containerId) {
-            const container = document.getElementById(containerId);
-            const allBtns = container.querySelectorAll('.mcq-btn');
-            allBtns.forEach(b => b.classList.remove('selected-correct', 'selected-wrong'));
-
-            if (isCorrect) {
-                btn.classList.add('selected-correct');
-            } else {
-                btn.classList.add('selected-wrong');
-            }
-        }
-
-        // ================================================================
-        // 6. WRITING SENTENCE BUILDER
-        // ================================================================
-        const correctAnswer = "The professor reminded the students to submit their assignments";
-
-        function moveWord(el) {
-            const ansBox = document.getElementById('answer-box');
-            el.classList.add('selected');
-            ansBox.appendChild(el);
-            document.getElementById('write-fb').classList.add('hidden');
-        }
-
-        function resetWords() {
-            const bank = document.getElementById('word-bank');
-            const ansBox = document.getElementById('answer-box');
-            while (ansBox.firstChild) {
-                ansBox.firstChild.classList.remove('selected');
-                bank.appendChild(ansBox.firstChild);
-            }
-            document.getElementById('write-fb').classList.add('hidden');
-            document.getElementById('answer-box').classList.remove('bg-emerald-50', 'border-emerald-400');
-        }
-
-        function checkSentence() {
-            const ansBox = document.getElementById('answer-box');
-            let currentSentence = "";
-            ansBox.childNodes.forEach(node => {
-                if (node.innerText) currentSentence += node.innerText + " ";
-            });
-
-            const fb = document.getElementById('write-fb');
-            fb.classList.remove('hidden');
-
-            if (currentSentence.trim() === correctAnswer) {
-                ansBox.classList.add('bg-emerald-50', 'border-emerald-400');
-                fb.innerHTML = '<i class="fa-solid fa-check text-emerald-500 mr-1"></i> ¡Sintaxis perfecta!';
-                fb.className = "mt-2 font-bold text-xs text-emerald-600";
-            } else {
-                fb.innerHTML = '<i class="fa-solid fa-xmark text-red-500 mr-1"></i> Orden incorrecto. Haz clic en la caja para reiniciar.';
-                fb.className = "mt-2 font-bold text-xs text-red-500";
-            }
-        }
+        // --------------------------------------------------------------
+        // 4. RENDER REACT APP
+        // --------------------------------------------------------------
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
